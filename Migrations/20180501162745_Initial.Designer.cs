@@ -11,7 +11,7 @@ using System;
 namespace counter.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20180501141709_Initial")]
+    [Migration("20180501162745_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -79,7 +79,7 @@ namespace counter.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<TimeSpan>("Duration");
+                    b.Property<int>("Duration");
 
                     b.Property<string>("Location")
                         .IsRequired();
@@ -90,7 +90,7 @@ namespace counter.Migrations
                     b.Property<string>("OwnerId")
                         .IsRequired();
 
-                    b.Property<decimal>("Price");
+                    b.Property<int>("Price");
 
                     b.HasKey("Id");
 

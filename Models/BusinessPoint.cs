@@ -14,8 +14,8 @@ namespace counter.Models
         [Required]
         public string Location { get; set; } 
         [Required]
-        public decimal Price { get; set; }
+        public int Price { get; set; }
         [Required]
-        public TimeSpan Duration { get; set; }
+        public int Duration { get; set; }
     }
 }

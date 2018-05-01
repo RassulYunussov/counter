@@ -78,7 +78,7 @@ namespace counter.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<TimeSpan>("Duration");
+                    b.Property<int>("Duration");
 
                     b.Property<string>("Location")
                         .IsRequired();
@@ -89,7 +89,7 @@ namespace counter.Migrations
                     b.Property<string>("OwnerId")
                         .IsRequired();
 
-                    b.Property<decimal>("Price");
+                    b.Property<int>("Price");
 
                     b.HasKey("Id");
 

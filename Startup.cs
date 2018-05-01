@@ -116,8 +116,8 @@ namespace counter
                         ir = await um.CreateAsync(oper, "operator");
                         if (ir.Succeeded)
                         {
-                            await um.AddToRoleAsync(user,"Operator");
-                            await um.AddClaimAsync(user,new Claim(OpenIdConnectConstants.Claims.Subject,user.Id));
+                            await um.AddToRoleAsync(oper,"Operator");
+                            await um.AddClaimAsync(oper,new Claim(OpenIdConnectConstants.Claims.Subject,oper.Id));
                         }
                     }
                 }

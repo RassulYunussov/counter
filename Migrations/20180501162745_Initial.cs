@@ -204,11 +204,11 @@ namespace counter.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Duration = table.Column<TimeSpan>(nullable: false),
+                    Duration = table.Column<int>(nullable: false),
                     Location = table.Column<string>(nullable: false),
                     Name = table.Column<string>(nullable: false),
                     OwnerId = table.Column<string>(nullable: false),
-                    Price = table.Column<decimal>(nullable: false)
+                    Price = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {

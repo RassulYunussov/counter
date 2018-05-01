@@ -13,7 +13,6 @@ using System;
 namespace counter.Controllers
 {
     [Route("/api/[controller]")]
-    [Authorize(Roles="Owner")]
     public class BusinessPointsController: Controller
     {
         ApplicationDbContext _ctx;
@@ -24,25 +23,51 @@ namespace counter.Controllers
             _userManager = userManager;
         }
         [HttpGet]
-        public async Task<IEnumerable<BusinessPoint>> Get()
+        [Authorize(Roles="Owner,Operator")]
+        public async Task<IEnumerable<BusinessPointView>> Get()
         {
            var user = await _userManager.GetUserAsync(User);
-           return await _ctx.BusinessPoints.Where(bp=>bp.Owner.Id==user.Id).ToListAsync();
+           var isOperator = await _userManager.IsInRoleAsync(user,"Operator");
+           string ownerId = user.Id;
+           if(isOperator)
+           {
+              var oper = await _ctx.Users.Include(u=>u.Owner).FirstOrDefaultAsync(u=>u.Id == user.Id);
+              ownerId = oper.Owner.Id;
+           }
+           return await _ctx.BusinessPoints.Where(bp=>bp.Owner.Id==ownerId).Select(bp=>new BusinessPointView {Id = bp.Id, Name = bp.Name,Location = bp.Location,Price = bp.Price,Duration = bp.Duration}).ToListAsync();
         }
         [HttpGet("{id}")]
+        [Authorize(Roles="Owner,Operator")]
         public async Task<BusinessPointView> Get(int id)
         {
             var bp = await _ctx.BusinessPoints.FindAsync(id);
-            return new BusinessPointView {Id = bp.Id, Name = bp.Name,Location = bp.Location,Price = (int)bp.Price,Duration = bp.Duration.Minutes};
+            return new BusinessPointView {Id = bp.Id, Name = bp.Name,Location = bp.Location,Price = bp.Price,Duration = bp.Duration};
+        }
+        [HttpPut]
+        [Authorize(Roles="Owner")]
+        public async Task<IActionResult> Put([FromBody] BusinessPointView bpv)
+        {
+            var bp = await _ctx.BusinessPoints.FindAsync(bpv.Id);
+            if(bp!=null)
+            {
+                bp.Name = bpv.Name;
+                bp.Location = bpv.Location;
+                bp.Price = bpv.Price;
+                bp.Duration = bpv.Duration;
+                await _ctx.SaveChangesAsync();
+                return Ok(bpv);
+            }
+            return BadRequest(bpv);
         }
         [HttpPost]
+        [Authorize(Roles="Owner")]
         public async Task<IActionResult> Post([FromBody] BusinessPointView bpv)
         {
             var user = await _userManager.GetUserAsync(User);
             BusinessPoint bp = new BusinessPoint{Name = bpv.Name,
                                                 Location = bpv.Location, 
                                                 Price = bpv.Price, 
-                                                Duration = TimeSpan.FromMinutes(bpv.Duration),
+                                                Duration = bpv.Duration,
                                                 Owner = user};
             _ctx.Add(bp);
             var result = await _ctx.SaveChangesAsync();
@@ -53,6 +78,7 @@ namespace counter.Controllers
             return BadRequest(bpv);
         }
         [HttpDelete("{id}")]
+        [Authorize(Roles="Owner")]
         public async Task<IActionResult> Delete(int id)
         {
              var bp = await _ctx.BusinessPoints.FindAsync(id);
