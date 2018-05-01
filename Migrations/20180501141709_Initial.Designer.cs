@@ -11,7 +11,7 @@ using System;
 namespace counter.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20180430085110_Initial")]
+    [Migration("20180501141709_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -72,6 +72,53 @@ namespace counter.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("AspNetUsers");
+                });
+
+            modelBuilder.Entity("counter.Models.BusinessPoint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<TimeSpan>("Duration");
+
+                    b.Property<string>("Location")
+                        .IsRequired();
+
+                    b.Property<string>("Name")
+                        .IsRequired();
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired();
+
+                    b.Property<decimal>("Price");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("BusinessPoints");
+                });
+
+            modelBuilder.Entity("counter.Models.Ticket", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<decimal>("Amount");
+
+                    b.Property<int?>("BusinessPointId");
+
+                    b.Property<DateTime>("OperationDate");
+
+                    b.Property<string>("OperatorId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessPointId");
+
+                    b.HasIndex("OperatorId");
+
+                    b.ToTable("Tickets");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -321,6 +368,25 @@ namespace counter.Migrations
                     b.HasOne("counter.Models.ApplicationUser", "Owner")
                         .WithMany()
                         .HasForeignKey("OwnerId");
+                });
+
+            modelBuilder.Entity("counter.Models.BusinessPoint", b =>
+                {
+                    b.HasOne("counter.Models.ApplicationUser", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("counter.Models.Ticket", b =>
+                {
+                    b.HasOne("counter.Models.BusinessPoint", "BusinessPoint")
+                        .WithMany()
+                        .HasForeignKey("BusinessPointId");
+
+                    b.HasOne("counter.Models.ApplicationUser", "Operator")
+                        .WithMany()
+                        .HasForeignKey("OperatorId");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

@@ -199,6 +199,29 @@ namespace counter.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "BusinessPoints",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Duration = table.Column<TimeSpan>(nullable: false),
+                    Location = table.Column<string>(nullable: false),
+                    Name = table.Column<string>(nullable: false),
+                    OwnerId = table.Column<string>(nullable: false),
+                    Price = table.Column<decimal>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessPoints", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BusinessPoints_AspNetUsers_OwnerId",
+                        column: x => x.OwnerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "OpenIddictAuthorizations",
                 columns: table => new
                 {
@@ -218,6 +241,34 @@ namespace counter.Migrations
                         name: "FK_OpenIddictAuthorizations_OpenIddictApplications_ApplicationId",
                         column: x => x.ApplicationId,
                         principalTable: "OpenIddictApplications",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Tickets",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Amount = table.Column<decimal>(nullable: false),
+                    BusinessPointId = table.Column<int>(nullable: true),
+                    OperationDate = table.Column<DateTime>(nullable: false),
+                    OperatorId = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tickets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Tickets_BusinessPoints_BusinessPointId",
+                        column: x => x.BusinessPointId,
+                        principalTable: "BusinessPoints",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Tickets_AspNetUsers_OperatorId",
+                        column: x => x.OperatorId,
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -299,6 +350,11 @@ namespace counter.Migrations
                 column: "OwnerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_BusinessPoints_OwnerId",
+                table: "BusinessPoints",
+                column: "OwnerId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OpenIddictApplications_ClientId",
                 table: "OpenIddictApplications",
                 column: "ClientId",
@@ -330,6 +386,16 @@ namespace counter.Migrations
                 table: "OpenIddictTokens",
                 column: "ReferenceId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tickets_BusinessPointId",
+                table: "Tickets",
+                column: "BusinessPointId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tickets_OperatorId",
+                table: "Tickets",
+                column: "OperatorId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -356,16 +422,22 @@ namespace counter.Migrations
                 name: "OpenIddictTokens");
 
             migrationBuilder.DropTable(
-                name: "AspNetRoles");
+                name: "Tickets");
 
             migrationBuilder.DropTable(
-                name: "AspNetUsers");
+                name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "OpenIddictAuthorizations");
 
             migrationBuilder.DropTable(
+                name: "BusinessPoints");
+
+            migrationBuilder.DropTable(
                 name: "OpenIddictApplications");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
         }
     }
 }

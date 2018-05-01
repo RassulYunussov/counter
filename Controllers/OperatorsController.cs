@@ -9,10 +9,12 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using AspNet.Security.OpenIdConnect.Primitives;
+using Microsoft.AspNetCore.Authorization;
 
 namespace counter.Controllers
 {
     [Route("/api/[controller]")]
+    [Authorize(Roles="Owner")]
     public class OperatorsController : Controller
     {
          private readonly UserManager<ApplicationUser> _userManager;
@@ -62,6 +64,17 @@ namespace counter.Controllers
              if(result.Succeeded)
                 return Ok();
              return BadRequest();
+         }
+         [HttpPut]
+         public async Task<IActionResult> Put([FromBody] Operator oper)
+         {
+              var user = await _userManager.FindByIdAsync(oper.Id);
+              user.UserName = oper.OperatorName;
+              user.PasswordHash = _userManager.PasswordHasher.HashPassword(user,oper.OperatorPassword);
+              var result =  await _userManager.UpdateAsync(user);
+              if(result.Succeeded)
+                return Ok();
+              return BadRequest();
          }
     }
 }

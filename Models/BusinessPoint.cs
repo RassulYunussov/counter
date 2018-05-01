@@ -8,7 +8,7 @@ namespace counter.Models
     {
         public int Id { get; set; }
         [Required]
-        public IdentityUser Owner { get; set; }
+        public ApplicationUser Owner { get; set; }
         [Required]
         public string Name { get; set; }
         [Required]
