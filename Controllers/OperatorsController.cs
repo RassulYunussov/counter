@@ -36,8 +36,9 @@ namespace counter.Controllers
          [HttpGet("{id}")]
          public async Task<Operator> Get(string id)
          {
+             var user = await _userManager.GetUserAsync(User);
              var oper = await (from o in _ctx.Users
-                             where o.Id == id
+                             where o.Id == id && o.Owner.Id == user.Id
                              select new Operator { Id = o.Id, OperatorName = o.UserName }).SingleOrDefaultAsync();
              return oper;
          }
@@ -45,36 +46,50 @@ namespace counter.Controllers
          [HttpPost]
          public async Task<IActionResult> Post([FromBody]Operator oper) 
          {
-             ApplicationUser user  = new ApplicationUser { UserName = oper.OperatorName,Email = oper.OperatorName+"counter.com" };
-             user.Owner = await _userManager.GetUserAsync(User);
-             var result = await _userManager.CreateAsync(user,oper.OperatorPassword);
-             if(result.Succeeded)
+             if(ModelState.IsValid)
              {
-                   await _userManager.AddToRoleAsync(user,"Operator");
-                   await _userManager.AddClaimAsync(user,new Claim(OpenIdConnectConstants.Claims.Subject,user.Id));
-                   return Json(new Operator {Id = user.Id, OperatorName = oper.OperatorName });
+                ApplicationUser user  = new ApplicationUser { UserName = oper.OperatorName,Email = oper.OperatorName+"counter.com" };
+                user.Owner = await _userManager.GetUserAsync(User);
+                var result = await _userManager.CreateAsync(user,oper.OperatorPassword);
+                if(result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(user,"Operator");
+                    await _userManager.AddClaimAsync(user,new Claim(OpenIdConnectConstants.Claims.Subject,user.Id));
+                    return Json(new Operator {Id = user.Id, OperatorName = oper.OperatorName });
+                }
              }
              return BadRequest(new { error="Can't create operator", name=oper.OperatorName});
          }
          [HttpDelete("{id}")]
          public async Task<IActionResult> Delete(string id)
          {
-             var user = await _userManager.FindByIdAsync(id);
-             var result =await _userManager.DeleteAsync(user);
-             if(result.Succeeded)
-                return Ok();
-             return BadRequest();
+            var ownerUser = await _userManager.GetUserAsync(User);
+            var user =  await _ctx.Users.Where(u=>u.Id==id && u.Owner.Id==ownerUser.Id).SingleOrDefaultAsync();
+            if(user!=null) 
+            {
+                var result =await _userManager.DeleteAsync(user);
+                if(result.Succeeded)
+                    return Ok();
+            }
+            return BadRequest();
          }
          [HttpPut]
          public async Task<IActionResult> Put([FromBody] Operator oper)
          {
-              var user = await _userManager.FindByIdAsync(oper.Id);
-              user.UserName = oper.OperatorName;
-              user.PasswordHash = _userManager.PasswordHasher.HashPassword(user,oper.OperatorPassword);
-              var result =  await _userManager.UpdateAsync(user);
-              if(result.Succeeded)
-                return Ok();
-              return BadRequest();
+            if(ModelState.IsValid)
+            {
+                var ownerUser = await _userManager.GetUserAsync(User);
+                var user =  await _ctx.Users.Where(u=>u.Id==oper.Id && u.Owner.Id==ownerUser.Id).SingleOrDefaultAsync();
+                if(user!=null)
+                {
+                    user.UserName = oper.OperatorName;
+                    user.PasswordHash = _userManager.PasswordHasher.HashPassword(user,oper.OperatorPassword);
+                    var result =  await _userManager.UpdateAsync(user);
+                    if(result.Succeeded)
+                        return Ok();
+                }
+            }
+            return BadRequest();
          }
     }
 }
