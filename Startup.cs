@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 using AspNet.Security.OpenIdConnect.Primitives;
 using counter.Authorization;
 using counter.Data;
+using counter.Hubs;
+using counter.Middlewares;
 using counter.Models;
+using counter.Observers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -79,7 +82,8 @@ namespace counter
             services.AddSingleton<IAuthorizationHandler, BusinessObjectAuthorizationHandler>();
 
             services.AddMvc();
-            
+            services.AddSignalR();
+            services.AddSingleton<StatsObservables>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -95,7 +99,11 @@ namespace counter
                 options.AllowAnyOrigin();
                 options.AllowCredentials();
             });
+            app.UseSignalRQueryStringAuth();
             app.UseAuthentication();
+            app.UseSignalR(options=>{
+                options.MapHub<StatsHub>("/Stats");
+            });
             app.UseMvc();
             Seed(app);
         }
