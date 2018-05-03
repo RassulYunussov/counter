@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace counter.Models
 {
-    public class BusinessPoint
+    public class BusinessPoint: IBusinessObject
     {
         public int Id { get; set; }
         [Required]

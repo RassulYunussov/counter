@@ -13,15 +13,13 @@ using System;
 namespace counter.Controllers
 {
     [Route("/api/[controller]")]
-    public class BusinessPointsController: Controller
+    public class BusinessPointsController: BusinessObjectController
     {
-        ApplicationDbContext _ctx;
-        UserManager<ApplicationUser> _userManager;
-        public BusinessPointsController(UserManager<ApplicationUser> userManager,ApplicationDbContext ctx)
+        public BusinessPointsController(UserManager<ApplicationUser> userManager, ApplicationDbContext ctx,IAuthorizationService authorizationService) : base(userManager, ctx,authorizationService)
         {
-            _ctx = ctx;
-            _userManager = userManager;
+
         }
+
         [HttpGet]
         [Authorize(Roles="Owner,Operator")]
         public async Task<IEnumerable<BusinessPointView>> Get()
@@ -55,9 +53,10 @@ namespace counter.Controllers
         [Authorize(Roles="Owner")]
         public async Task<IActionResult> Put([FromBody] BusinessPointView bpv)
         {
-            var user = await _userManager.GetUserAsync(User);
-            var result = await _ctx.BusinessPoints.Where(bp=> bp.Id == bpv.Id && bp.Owner.Id == user.Id).SingleOrDefaultAsync();
-            if(result!=null)
+            var result = await _ctx.BusinessPoints.Include(bp=>bp.Owner)
+                                                    .Where(bp=> bp.Id == bpv.Id)
+                                                    .SingleOrDefaultAsync();
+            if(await IsOwner(result))
             {
                 result.Name = bpv.Name;
                 result.Location = bpv.Location;
@@ -90,9 +89,10 @@ namespace counter.Controllers
         [Authorize(Roles="Owner")]
         public async Task<IActionResult> Delete(int id)
         {
-            var user = await _userManager.GetUserAsync(User);
-            var result = await _ctx.BusinessPoints.Where(bp=> bp.Id == id && bp.Owner.Id == user.Id).SingleOrDefaultAsync();
-            if(result!=null)
+            var result = await _ctx.BusinessPoints.Include(bp=>bp.Owner)
+                                                    .Where(bp=> bp.Id == id)
+                                                    .SingleOrDefaultAsync();
+            if(await IsOwner(result))
             {
                 _ctx.BusinessPoints.Remove(result);
                 await _ctx.SaveChangesAsync();

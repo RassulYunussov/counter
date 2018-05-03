@@ -4,9 +4,11 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AspNet.Security.OpenIdConnect.Primitives;
+using counter.Authorization;
 using counter.Data;
 using counter.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -67,6 +69,15 @@ namespace counter
                      options.AllowPasswordFlow().AllowRefreshTokenFlow();
                      options.DisableHttpsRequirement();
             });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("EditPolicy", policy =>
+                    policy.Requirements.Add(new SameOwnerRequirement()));
+            });
+
+            services.AddSingleton<IAuthorizationHandler, BusinessObjectAuthorizationHandler>();
+
             services.AddMvc();
             
         }
@@ -119,6 +130,9 @@ namespace counter
                             await um.AddToRoleAsync(oper,"Operator");
                             await um.AddClaimAsync(oper,new Claim(OpenIdConnectConstants.Claims.Subject,oper.Id));
                         }
+                        var bp = new BusinessPoint{Name="Batut",Owner = user,Location="Park", Price = 500, Duration = 15};
+                        context.Add(bp);
+                        await context.SaveChangesAsync();
                     }
                 }
             }

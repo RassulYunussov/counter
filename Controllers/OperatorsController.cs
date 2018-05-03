@@ -10,19 +10,19 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using AspNet.Security.OpenIdConnect.Primitives;
 using Microsoft.AspNetCore.Authorization;
+using counter.Authorization;
 
 namespace counter.Controllers
 {
     [Route("/api/[controller]")]
     [Authorize(Roles="Owner")]
-    public class OperatorsController : Controller
+    public class OperatorsController :BusinessObjectController
     {
-         private readonly UserManager<ApplicationUser> _userManager;
-         private readonly ApplicationDbContext _ctx;
-         public OperatorsController(UserManager<ApplicationUser> userManager,ApplicationDbContext ctx)   
+
+         public OperatorsController(UserManager<ApplicationUser> userManager,
+                                    ApplicationDbContext ctx,
+                                    IAuthorizationService authorizationService):base(userManager,ctx,authorizationService)   
          {
-             _userManager = userManager;
-             _ctx = ctx;
          }
          [HttpGet]
          public async Task<IEnumerable<Operator>> Get()
@@ -63,9 +63,10 @@ namespace counter.Controllers
          [HttpDelete("{id}")]
          public async Task<IActionResult> Delete(string id)
          {
-            var ownerUser = await _userManager.GetUserAsync(User);
-            var user =  await _ctx.Users.Where(u=>u.Id==id && u.Owner.Id==ownerUser.Id).SingleOrDefaultAsync();
-            if(user!=null) 
+            var user = await _ctx.Users.Include(u=>u.Owner)
+                                        .Where(u=>u.Id==id)
+                                        .SingleOrDefaultAsync();
+            if(await IsOwner(user))
             {
                 var result =await _userManager.DeleteAsync(user);
                 if(result.Succeeded)
@@ -78,9 +79,10 @@ namespace counter.Controllers
          {
             if(ModelState.IsValid)
             {
-                var ownerUser = await _userManager.GetUserAsync(User);
-                var user =  await _ctx.Users.Where(u=>u.Id==oper.Id && u.Owner.Id==ownerUser.Id).SingleOrDefaultAsync();
-                if(user!=null)
+                var user = await _ctx.Users.Include(u=>u.Owner)
+                                        .Where(u=>u.Id==oper.Id)
+                                        .SingleOrDefaultAsync();
+                if(await IsOwner(user))
                 {
                     user.UserName = oper.OperatorName;
                     user.PasswordHash = _userManager.PasswordHasher.HashPassword(user,oper.OperatorPassword);
