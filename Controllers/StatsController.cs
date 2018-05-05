@@ -47,27 +47,73 @@ namespace counter.Controllers
                                                     .Select(b => new { businessPointId = b.Key, amount = b.Sum(t=>t.Amount)});
            return Json(res);
         }
-        [HttpGet("{businessPointId}/{startDate}/{endDate}/{period?}")]
-        public async Task<IActionResult> BusinessPointDynamics(int businessPointId, string period, DateTime startDate, DateTime endDate)
+        private IQueryable<Ticket> GetTickets(string ownerId, int businessPointId, string period,DateTime startDate, DateTime endDate) 
         {
-           var user = await _userManager.GetUserAsync(User);
-           string ownerId = user.Id;
-           var res = (from bp in _ctx.BusinessPoints
+          return from bp in _ctx.BusinessPoints
                         join t in _ctx.Tickets on bp.Id equals t.BusinessPoint.Id
                         where bp.Id==businessPointId 
                                 && bp.Owner.Id==ownerId 
                                 && t.OperationDate >= startDate
                                 && t.OperationDate < endDate
-                        select t);
-          
+                        select t;
+        }
+        private IQueryable<Ticket> GetTickets(string ownerId, int businessPointId, string period)
+        {
            switch(period) 
            {
                case "y":
-                        return Json(res.GroupBy(t=>t.OperationDate.Year).Select(g=>new { period = g.Key, total = g.Sum(gg=>gg.Amount)}));
+                //return months in current year
+                return (from bp in _ctx.BusinessPoints
+                                        join t in _ctx.Tickets on bp.Id equals t.BusinessPoint.Id
+                                        where bp.Id==businessPointId 
+                                                && bp.Owner.Id==ownerId 
+                                                && t.OperationDate.Year == DateTime.Now.Year
+                                        select t);
                case "m":
-                        return Json(res.GroupBy(t=>t.OperationDate.ToString("yyyy-MM")).Select(g=>new { period = g.Key, total = g.Sum(gg=>gg.Amount)}));
+                //return days in current month
+                return (from bp in _ctx.BusinessPoints
+                                        join t in _ctx.Tickets on bp.Id equals t.BusinessPoint.Id
+                                        where bp.Id==businessPointId 
+                                                && bp.Owner.Id==ownerId 
+                                                && t.OperationDate.ToString("yyyy-MM") == DateTime.Now.ToString("yyyy-MM")
+                                        select t);
                default:
-                        return Json(res.GroupBy(t=>t.OperationDate.ToShortDateString()).Select(g=>new { period = g.Key, total = g.Sum(gg=>gg.Amount)}));
+               //return all in current day
+                return (from bp in _ctx.BusinessPoints
+                                        join t in _ctx.Tickets on bp.Id equals t.BusinessPoint.Id
+                                        where bp.Id==businessPointId 
+                                                && bp.Owner.Id==ownerId 
+                                                && t.OperationDate.ToShortDateString() == DateTime.Now.ToShortDateString()
+                                        select t);
+           }
+        }
+        [HttpGet("{businessPointId}/{startDate}/{endDate}/{period?}")]
+        public async Task<IActionResult> BusinessPointDynamics(int businessPointId, string period, DateTime startDate, DateTime endDate)
+        {
+           var user = await _userManager.GetUserAsync(User);
+           string ownerId = user.Id;
+           IQueryable<Ticket> tickets = startDate==endDate? GetTickets(ownerId,businessPointId,period) : 
+                                                            GetTickets(ownerId,businessPointId,period,startDate,endDate);
+           if(startDate==endDate)
+           {
+               switch(period) 
+                {
+                    case "y":
+                            return Json(tickets.GroupBy(t=>t.OperationDate.Month).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                    case "m":
+                            return Json(tickets.GroupBy(t=>t.OperationDate.Day).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                    case "d":
+                            return Json(tickets.GroupBy(t=>t.OperationDate.ToString("yyyy-MM-hh")).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                }
+           }
+           switch(period) 
+           {
+               case "y":
+                        return Json(tickets.GroupBy(t=>t.OperationDate.Year).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+               case "m":
+                        return Json(tickets.GroupBy(t=>t.OperationDate.ToString("yyyy-MM")).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+               default:
+                        return Json(tickets.GroupBy(t=>t.OperationDate.ToShortDateString()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
            }
         }
     }
