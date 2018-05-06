@@ -87,34 +87,40 @@ namespace counter.Controllers
                                         select t);
            }
         }
-        [HttpGet("{businessPointId}/{startDate}/{endDate}/{period?}")]
-        public async Task<IActionResult> BusinessPointDynamics(int businessPointId, string period, DateTime startDate, DateTime endDate)
+        private async Task<IActionResult> GetBPStats(string ownerId, int businessPointId, string period)
         {
-           var user = await _userManager.GetUserAsync(User);
-           string ownerId = user.Id;
-           IQueryable<Ticket> tickets = startDate==endDate? GetTickets(ownerId,businessPointId,period) : 
-                                                            GetTickets(ownerId,businessPointId,period,startDate,endDate);
-           if(startDate==endDate)
-           {
-               switch(period) 
+                var tickets = GetTickets(ownerId,businessPointId,period);
+                switch(period) 
                 {
                     case "y":
                             return Json(tickets.GroupBy(t=>t.OperationDate.Month).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
                     case "m":
                             return Json(tickets.GroupBy(t=>t.OperationDate.Day).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
-                    case "d":
+                    default:
                             return Json(tickets.GroupBy(t=>t.OperationDate.ToString("yyyy-MM-hh")).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
                 }
-           }
-           switch(period) 
-           {
-               case "y":
-                        return Json(tickets.GroupBy(t=>t.OperationDate.Year).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
-               case "m":
-                        return Json(tickets.GroupBy(t=>t.OperationDate.ToString("yyyy-MM")).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
-               default:
-                        return Json(tickets.GroupBy(t=>t.OperationDate.ToShortDateString()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
-           }
+        }
+        private async Task<IActionResult> GetBPStats(string ownerId, int businessPointId, string period,DateTime startDate, DateTime endDate)
+        {
+                var tickets  = GetTickets(ownerId,businessPointId,period,startDate,endDate);
+                switch(period) 
+                {
+                        case "y":
+                                return Json(tickets.GroupBy(t=>t.OperationDate.Year).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                        case "m":
+                                return Json(tickets.GroupBy(t=>t.OperationDate.ToString("yyyy-MM")).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                        default:
+                                return Json(tickets.GroupBy(t=>t.OperationDate.ToShortDateString()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                }
+        }
+        [HttpGet("{businessPointId}/{startDate}/{endDate}/{period?}")]
+        public async Task<IActionResult> BusinessPointDynamics(int businessPointId, string period, DateTime startDate, DateTime endDate)
+        {
+           var user = await _userManager.GetUserAsync(User);
+           string ownerId = user.Id;
+           if(startDate==endDate)
+                return await GetBPStats(ownerId,businessPointId,period);
+           return await GetBPStats(ownerId,businessPointId,period,startDate,endDate);
         }
     }
 }
