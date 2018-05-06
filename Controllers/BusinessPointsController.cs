@@ -28,10 +28,10 @@ namespace counter.Controllers
            string ownerId = user.Id;
            if(User.IsInRole("Operator"))
            {
-              var oper = await _ctx.Users.Include(u=>u.Owner).FirstOrDefaultAsync(u=>u.Id == user.Id);
+              var oper = await _ctx.Users.AsNoTracking().Include(u=>u.Owner).FirstOrDefaultAsync(u=>u.Id == user.Id);
               ownerId = oper.Owner.Id;
            }
-           return await _ctx.BusinessPoints.Where(bp=>bp.Owner.Id==ownerId).Select(bp=>new BusinessPointView {Id = bp.Id, Name = bp.Name,Location = bp.Location,Price = bp.Price,Duration = bp.Duration}).ToListAsync();
+           return await _ctx.BusinessPoints.AsNoTracking().Where(bp=>bp.Owner.Id==ownerId).Select(bp=>new BusinessPointView {Id = bp.Id, Name = bp.Name,Location = bp.Location,Price = bp.Price,Duration = bp.Duration}).ToListAsync();
         }
         [HttpGet("{id}")]
         [Authorize(Roles="Owner,Operator")]
@@ -41,10 +41,10 @@ namespace counter.Controllers
             string ownerId = user.Id;
             if(User.IsInRole("Operator"))
             {
-                var oper = await _ctx.Users.Include(u=>u.Owner).FirstOrDefaultAsync(u=>u.Id == user.Id);
+                var oper = await _ctx.Users.AsNoTracking().Include(u=>u.Owner).FirstOrDefaultAsync(u=>u.Id == user.Id);
                 ownerId = oper.Owner.Id;
             }
-            var result = await _ctx.BusinessPoints.Where(bp=> bp.Id == id && bp.Owner.Id == ownerId).SingleOrDefaultAsync();
+            var result = await _ctx.BusinessPoints.AsNoTracking().Where(bp=> bp.Id == id && bp.Owner.Id == ownerId).SingleOrDefaultAsync();
             if(result!=null)
                 return new BusinessPointView {Id = result.Id, Name = result.Name,Location = result.Location,Price =result.Price,Duration = result.Duration};
             return null;

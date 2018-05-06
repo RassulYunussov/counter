@@ -30,7 +30,7 @@ namespace counter.Controllers
              var user = await _userManager.GetUserAsync(User);
              var operators = await (from o in _ctx.Users
                              where o.Owner.Id == user.Id
-                             select new Operator { Id = o.Id, OperatorName = o.UserName }).ToListAsync();
+                             select new Operator { Id = o.Id, OperatorName = o.UserName }).AsNoTracking().ToListAsync();
              return operators;
          }
          [HttpGet("{id}")]
@@ -39,7 +39,7 @@ namespace counter.Controllers
              var user = await _userManager.GetUserAsync(User);
              var oper = await (from o in _ctx.Users
                              where o.Id == id && o.Owner.Id == user.Id
-                             select new Operator { Id = o.Id, OperatorName = o.UserName }).SingleOrDefaultAsync();
+                             select new Operator { Id = o.Id, OperatorName = o.UserName }).AsNoTracking().SingleOrDefaultAsync();
              return oper;
          }
 
