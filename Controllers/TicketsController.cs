@@ -32,6 +32,7 @@ namespace counter.Controllers
             var oper = await _userManager.GetUserAsync(User);
             BusinessPoint bp = await _ctx.BusinessPoints
                                         .Include(p=>p.Owner)
+                                        .Where(p=>p.Id==tv.BusinessPointId)
                                         .SingleOrDefaultAsync();
             Ticket t = new Ticket{OperationDate = DateTime.Now,Amount = tv.Amount,Operator = oper, BusinessPoint = bp};
             _ctx.Tickets.Add(t);
