@@ -27,9 +27,9 @@ namespace counter.Observers
             _observers.Add(observer);
             return new StatsUnsusbscriber(_observers,observer);
         }
-        public void BroadcastStats(string operatorName,int businessPointId, decimal amount)
+        public Task BroadcastStats(string operatorName,int businessPointId, decimal amount)
         {
-            Task.Run(()=>{
+            return Task.Run(()=>{
                 var stat = new BusinessPointStats{ BusinessPointId = businessPointId,TotalAmount = amount};
                 foreach (var o in _observers)
                 {
