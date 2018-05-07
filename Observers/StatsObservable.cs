@@ -1,6 +1,7 @@
 using System;
 using counter.Stats;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace counter.Observers
 {
@@ -28,10 +29,13 @@ namespace counter.Observers
         }
         public void BroadcastStats(string operatorName,int businessPointId, decimal amount)
         {
-            foreach (var o in _observers)
-            {
-                o.OnNext(new BusinessPointStats{ BusinessPointId = businessPointId,TotalAmount = amount});
-            }
+            Task.Run(()=>{
+                var stat = new BusinessPointStats{ BusinessPointId = businessPointId,TotalAmount = amount};
+                foreach (var o in _observers)
+                {
+                    o.OnNext(stat);
+                }
+            });
         }
     }
     public class StatsUnsusbscriber :IDisposable
