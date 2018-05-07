@@ -18,7 +18,9 @@ namespace counter.Middlewares
         // can authorize the request correctly
         public async Task Invoke(HttpContext context)
         {
-            if (context.Request.Query.TryGetValue("token", out var token))
+            if (context.Request.Headers["Connection"]=="Upgrade"
+                &&context.Request.Headers["Upgrade"]=="websocket"
+                &&context.Request.Query.TryGetValue("access_token", out var token))
             {
                 context.Request.Headers.Add("Authorization", "Bearer " + token.First());
             }
