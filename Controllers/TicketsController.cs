@@ -40,7 +40,7 @@ namespace counter.Controllers
             if(result>0) 
             {
 
-                decimal Amount = await _ctx.Tickets.Where(tt => tt.OperationDate.ToShortDateString() == DateTime.Now.ToShortDateString())
+                decimal Amount = await _ctx.Tickets.Where(tt => tt.BusinessPoint.Id==bp.Id && tt.OperationDate.ToShortDateString() == DateTime.Now.ToShortDateString())
                                 .SumAsync(tt=>tt.Amount);
                 _so.GetObservable(bp.Owner.UserName).BroadcastStats(oper.UserName,bp.Id,Amount);
                 return Ok(tv);
