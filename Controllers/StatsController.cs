@@ -12,6 +12,7 @@ namespace counter.Controllers
 {
     [Route("/api/[controller]/[action]")]
     [Authorize(Roles="Owner")]
+    [ApiController]
     public class StatsController: BusinessObjectController
     {
         public StatsController(UserManager<ApplicationUser> userManager,ApplicationDbContext ctx,  IAuthorizationService authorizationService):base( userManager, ctx, authorizationService)
@@ -46,7 +47,7 @@ namespace counter.Controllers
                         where bp.Owner.Id==ownerId && InPeriod(period,t.OperationDate)
                         select new {bp.Id,t.Amount}).GroupBy(b=>b.Id)
                                                     .Select(b => new { businessPointId = b.Key, amount = b.Sum(t=>t.Amount)});
-           return Json(res);
+           return Ok(res);
         }
         private IQueryable<Ticket> GetTickets(string ownerId, int businessPointId, string period,DateTime startDate, DateTime endDate) 
         {
@@ -94,11 +95,11 @@ namespace counter.Controllers
                 switch(period) 
                 {
                     case "y":
-                            return Json((await tickets.GroupBy(t=>t.OperationDate.Month).ToListAsync()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                            return Ok((await tickets.GroupBy(t=>t.OperationDate.Month).ToListAsync()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
                     case "m":
-                            return Json((await tickets.GroupBy(t=>t.OperationDate.Day).ToListAsync()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                            return Ok((await tickets.GroupBy(t=>t.OperationDate.Day).ToListAsync()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
                     default:                          
-                            return Json((await tickets.GroupBy(t=>t.OperationDate.ToString("yyyy-MM-hh")).ToListAsync()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                            return Ok((await tickets.GroupBy(t=>t.OperationDate.ToString("yyyy-MM-hh")).ToListAsync()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
                 }
         }
         private async Task<IActionResult> GetBPStats(string ownerId, int businessPointId, string period,DateTime startDate, DateTime endDate)

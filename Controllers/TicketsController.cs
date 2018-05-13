@@ -15,6 +15,7 @@ namespace counter.Controllers
 {
     [Route("/api/[controller]")]
     [Authorize(Roles="Operator")]
+    [ApiController]
     public class TicketsController: Controller
     {
         ApplicationDbContext _ctx;
@@ -28,7 +29,16 @@ namespace counter.Controllers
             _userManager = userManager;
             _sc = sc;
         }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id)
+        {
+            Ticket t = await _ctx.Tickets.FindAsync(id);
+            if(t!=null)
+                return Ok(t);
+            return NotFound();                        
+        }
         [HttpPost]
+        [ProducesResponseType(201)]
         public async Task<IActionResult> AddTicket([FromBody] TicketView tv)
         {
             var oper = await _userManager.GetUserAsync(User);
@@ -45,7 +55,7 @@ namespace counter.Controllers
                 decimal Amount = await _ctx.Tickets.Where(tt => tt.BusinessPoint.Id==bp.Id && tt.OperationDate.ToShortDateString() == DateTime.Now.ToShortDateString())
                                 .SumAsync(tt=>tt.Amount);
                 await _sc.GetChannel(bp.Owner.UserName).Writer.WriteAsync(new BusinessPointStats{BusinessPointId = bp.Id, TotalAmount = Amount}); 
-                return Ok(tv);
+                return CreatedAtAction(nameof(Get),new {id=t.Id},tv);
             }
             return BadRequest(tv);
         }

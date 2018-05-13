@@ -16,6 +16,7 @@ namespace counter.Controllers
 {
     [Route("/api/[controller]")]
     [Authorize(Roles="Owner")]
+    [ApiController]
     public class OperatorsController :BusinessObjectController
     {
 
@@ -34,16 +35,19 @@ namespace counter.Controllers
              return operators;
          }
          [HttpGet("{id}")]
-         public async Task<Operator> Get(string id)
+         public async Task<IActionResult> Get(string id)
          {
-             var user = await _userManager.GetUserAsync(User);
-             var oper = await (from o in _ctx.Users
+            var user = await _userManager.GetUserAsync(User);
+            var oper = await (from o in _ctx.Users
                              where o.Id == id && o.Owner.Id == user.Id
                              select new Operator { Id = o.Id, OperatorName = o.UserName }).AsNoTracking().SingleOrDefaultAsync();
-             return oper;
+            if(oper!=null)
+                return Ok(oper);
+            return NotFound();
          }
 
          [HttpPost]
+         [ProducesResponseType(201)]
          public async Task<IActionResult> Post([FromBody]Operator oper) 
          {
              if(ModelState.IsValid)
@@ -55,7 +59,7 @@ namespace counter.Controllers
                 {
                     await _userManager.AddToRoleAsync(user,"Operator");
                     await _userManager.AddClaimAsync(user,new Claim(OpenIdConnectConstants.Claims.Subject,user.Id));
-                    return Json(new Operator {Id = user.Id, OperatorName = oper.OperatorName });
+                    return CreatedAtAction(nameof(Get), new {id = user.Id },new Operator {Id = user.Id, OperatorName = oper.OperatorName });
                 }
              }
              return BadRequest(new { error="Can't create operator", name=oper.OperatorName});

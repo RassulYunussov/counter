@@ -13,6 +13,7 @@ using System;
 namespace counter.Controllers
 {
     [Route("/api/[controller]")]
+    [ApiController]
     public class BusinessPointsController: BusinessObjectController
     {
         public BusinessPointsController(UserManager<ApplicationUser> userManager, ApplicationDbContext ctx,IAuthorizationService authorizationService) : base(userManager, ctx,authorizationService)
@@ -35,7 +36,7 @@ namespace counter.Controllers
         }
         [HttpGet("{id}")]
         [Authorize(Roles="Owner,Operator")]
-        public async Task<BusinessPointView> Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
             var user = await _userManager.GetUserAsync(User);
             string ownerId = user.Id;
@@ -46,8 +47,8 @@ namespace counter.Controllers
             }
             var result = await _ctx.BusinessPoints.AsNoTracking().Where(bp=> bp.Id == id && bp.Owner.Id == ownerId).SingleOrDefaultAsync();
             if(result!=null)
-                return new BusinessPointView {Id = result.Id, Name = result.Name,Location = result.Location,Price =result.Price,Duration = result.Duration};
-            return null;
+                return Ok(new BusinessPointView {Id = result.Id, Name = result.Name,Location = result.Location,Price =result.Price,Duration = result.Duration});
+            return NotFound();
         }
         [HttpPut]
         [Authorize(Roles="Owner")]
@@ -69,6 +70,7 @@ namespace counter.Controllers
         }
         [HttpPost]
         [Authorize(Roles="Owner")]
+        [ProducesResponseType(201)]
         public async Task<IActionResult> Post([FromBody] BusinessPointView bpv)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -81,7 +83,7 @@ namespace counter.Controllers
             var result = await _ctx.SaveChangesAsync();
             if(result>0){
                 bpv.Id = bp.Id;
-                return Ok(bpv);
+                return CreatedAtAction(nameof(Get), new {id = bp.Id},bpv);
             }
             return BadRequest(bpv);
         }
