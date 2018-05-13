@@ -2,54 +2,22 @@ using System;
 using counter.Stats;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Threading.Channels;
 
 namespace counter.Observers
 {
-    public class StatsObservables
+    public class BusinessPointStatsChannels
     {
-        Dictionary<string,StatsObservable> _observables = new Dictionary<string,StatsObservable>();
-        public StatsObservable GetObservable(string user)
-        {
-           if(_observables.ContainsKey(user))
-               return _observables[user];
-           else
-           {
-               _observables.Add(user,new StatsObservable());
-               return _observables[user];
-           }
-        }
-    }
-    public class StatsObservable : IObservable<BusinessPointStats>
-    {
-        List<IObserver<BusinessPointStats>> _observers = new List<IObserver<BusinessPointStats>>();
-        public IDisposable Subscribe(IObserver<BusinessPointStats> observer)
-        {
-            _observers.Add(observer);
-            return new StatsUnsusbscriber(_observers,observer);
-        }
-        public Task BroadcastStats(string operatorName,int businessPointId, decimal amount)
-        {
-            return Task.Run(()=>{
-                var stat = new BusinessPointStats{ BusinessPointId = businessPointId,TotalAmount = amount};
-                foreach (var o in _observers)
-                {
-                    o.OnNext(stat);
-                }
-            });
-        }
-    }
-    public class StatsUnsusbscriber :IDisposable
-    {
-        List<IObserver<BusinessPointStats>> _observers;
-        IObserver<BusinessPointStats> _observer;
-        public StatsUnsusbscriber(List<IObserver<BusinessPointStats>> observers, IObserver<BusinessPointStats> observer)
-        {
-            _observers = observers;
-            _observer = observer;
-        }
-        public void Dispose()
-        {
-            _observers.Remove(_observer);
-        }
+         Dictionary<string,Channel<BusinessPointStats>> _channels = new Dictionary<string,Channel<BusinessPointStats>>();
+         public Channel<BusinessPointStats> GetChannel(string user)
+         {
+            if(_channels.ContainsKey(user))
+               return _channels[user];
+            else
+            {
+                _channels.Add(user,Channel.CreateUnbounded<BusinessPointStats>());
+                return _channels[user];
+            }
+         }
     }
 }

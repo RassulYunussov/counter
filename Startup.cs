@@ -83,7 +83,7 @@ namespace counter
 
             services.AddMvc();
             services.AddSignalR();
-            services.AddSingleton<StatsObservables>();
+            services.AddSingleton<BusinessPointStatsChannels>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

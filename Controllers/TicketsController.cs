@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using counter.Stats;
+
 namespace counter.Controllers
 {
     [Route("/api/[controller]")]
@@ -17,14 +19,14 @@ namespace counter.Controllers
     {
         ApplicationDbContext _ctx;
         UserManager<ApplicationUser> _userManager;
-        StatsObservables _so;
+        BusinessPointStatsChannels _sc;
         public TicketsController(ApplicationDbContext ctx,
                                 UserManager<ApplicationUser> userManager,
-                                StatsObservables so)
+                                BusinessPointStatsChannels sc)
         {
             _ctx = ctx;
             _userManager = userManager;
-            _so = so;
+            _sc = sc;
         }
         [HttpPost]
         public async Task<IActionResult> AddTicket([FromBody] TicketView tv)
@@ -42,7 +44,7 @@ namespace counter.Controllers
 
                 decimal Amount = await _ctx.Tickets.Where(tt => tt.BusinessPoint.Id==bp.Id && tt.OperationDate.ToShortDateString() == DateTime.Now.ToShortDateString())
                                 .SumAsync(tt=>tt.Amount);
-                _so.GetObservable(bp.Owner.UserName).BroadcastStats(oper.UserName,bp.Id,Amount);
+                await _sc.GetChannel(bp.Owner.UserName).Writer.WriteAsync(new BusinessPointStats{BusinessPointId = bp.Id, TotalAmount = Amount}); 
                 return Ok(tv);
             }
             return BadRequest(tv);

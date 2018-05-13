@@ -6,6 +6,7 @@ using counter.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace counter.Controllers
 {
@@ -93,11 +94,11 @@ namespace counter.Controllers
                 switch(period) 
                 {
                     case "y":
-                            return Json(tickets.GroupBy(t=>t.OperationDate.Month).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                            return Json((await tickets.GroupBy(t=>t.OperationDate.Month).ToListAsync()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
                     case "m":
-                            return Json(tickets.GroupBy(t=>t.OperationDate.Day).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
-                    default:
-                            return Json(tickets.GroupBy(t=>t.OperationDate.ToString("yyyy-MM-hh")).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                            return Json((await tickets.GroupBy(t=>t.OperationDate.Day).ToListAsync()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
+                    default:                          
+                            return Json((await tickets.GroupBy(t=>t.OperationDate.ToString("yyyy-MM-hh")).ToListAsync()).Select(g=>new object []{g.Key,g.Sum(gg=>gg.Amount)}));
                 }
         }
         private async Task<IActionResult> GetBPStats(string ownerId, int businessPointId, string period,DateTime startDate, DateTime endDate)

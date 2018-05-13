@@ -1,4 +1,7 @@
+using System.Threading.Channels;
+using System.Threading.Tasks;
 using counter.Observers;
+using counter.Stats;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -7,14 +10,14 @@ namespace counter.Hubs
     [Authorize]
     public class StatsHub: Hub 
     {
-        StatsObservables _so;
-        public StatsHub(StatsObservables so)
+        BusinessPointStatsChannels _sc;
+        public StatsHub(BusinessPointStatsChannels sc)
         {
-            _so = so;
+            _sc = sc;
         }
-        public StatsObservable Stats()
+        public ChannelReader<BusinessPointStats>  Stats()
         {
-            return _so.GetObservable(Context.User.Identity.Name);
+            return _sc.GetChannel(Context.User.Identity.Name);
         }
     }
 }
